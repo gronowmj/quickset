@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<meta name="theme-color" content="#4a2a8c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quickset">
+<title>Quickset</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true"><i class="o"></i><i></i><i class="b"></i><i></i><i class="b"></i><i></i><i class="b"></i><i></i><i></i></span><h1>Quickset</h1></div>
+  <div class="sub" id="puzzleTitle"></div>
+</header>
+<div class="strip">
+  <div class="timer" id="timer">0:00</div>
+  <div class="actions">
+    <button id="hintBtn" class="pill" aria-haspopup="true"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Hint</button>
+    <button id="moreBtn" class="round" aria-label="More">&middot;&middot;&middot;</button>
+  </div>
+</div>
+<main>
+  <div id="gridWrap"><div id="grid" role="grid" aria-label="Crossword grid"></div></div>
+</main>
+<div class="cluebar" id="clueBar">
+  <button class="arrow" id="prevClue" aria-label="Previous clue">&#8249;</button>
+  <div class="clue" id="clueText"></div>
+  <button class="arrow" id="nextClue" aria-label="Next clue">&#8250;</button>
+</div>
+<div class="kbd" id="kbd"></div>
+
+<div class="sheet" id="hintMenu" hidden>
+  <div class="menu">
+    <button data-hint="letter">Reveal letter</button>
+    <button data-hint="word">Reveal word</button>
+    <button data-hint="checkword">Check word</button>
+    <button data-hint="checkgrid">Check grid</button>
+    <button data-hint="grid" class="danger">Reveal grid</button>
+    <button class="cancel">Cancel</button>
+  </div>
+</div>
+<div class="sheet" id="moreMenu" hidden>
+  <div class="menu">
+    <button id="archiveBtn">Archive</button>
+    <button id="soundBtn">Sound: on</button>
+    <button id="helpBtn">How to play</button>
+    <button id="restartBtn">Clear this puzzle</button>
+    <button class="cancel">Close</button>
+  </div>
+</div>
+<div class="sheet" id="archive" hidden>
+  <div class="menu list"><h2>Archive</h2><div id="archiveList"></div><button class="cancel">Close</button></div>
+</div>
+<div class="sheet" id="confirm" hidden>
+  <div class="card"><p id="confirmText"></p><div class="row"><button class="cancel">Cancel</button><button id="confirmOk" class="primary">Yes</button></div></div>
+</div>
+<div class="sheet" id="help" hidden>
+  <div class="card"><h2>How to play</h2><p>Every clue is a straight definition. The number in brackets is the length of the answer.</p><p>Tap a square to select it, and tap it again to switch between across and down. Tap the clue bar to switch too, or use the arrows to move between clues.</p><p>Stuck? The Hint button reveals or checks letters. Your progress is saved on this device.</p><div class="row"><button class="cancel primary">Got it</button></div></div>
+</div>
+<div class="sheet" id="done" hidden>
+  <div class="card done"><div class="badge">✓</div><h2>Well done</h2><p id="doneStats"></p><pre id="shareText"></pre><div class="row"><button id="shareBtn" class="primary">Share</button><button class="cancel">Close</button></div></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

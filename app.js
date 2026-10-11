@@ -67,7 +67,7 @@ function setup(){
   for(const e of P.entries){
     e.cells=[]; for(let i=0;i<e.len;i++){ const r=e.row+(e.dir==='D'?i:0), c=e.col+(e.dir==='A'?i:0); e.cells.push([r,c]); entryAt[`${r},${c},${e.dir}`]=e; grid[`${r},${c}`]=ans[e.id][i]; }
   }
-  const g=$('#grid'); g.innerHTML='';
+  const g=$('#grid'); g.innerHTML=''; g.style.setProperty('--cols',W); g.style.setProperty('--rows',H);
   const nums={}; P.entries.forEach(e=>nums[`${e.row},${e.col}`]=e.num);
   for(let r=0;r<H;r++) for(let c=0;c<W;c++){
     const d=document.createElement('div'); d.className='cell'+(P.grid[r][c]==='#'?' blk':'');

@@ -30,7 +30,7 @@ main{flex:1 0 auto;display:flex;align-items:center;justify-content:center;paddin
 .arrow{background:none;border:0;font-size:34px;line-height:1;padding:0 14px;height:56px;color:#222}
 .clue{flex:1;text-align:center;font-size:16px;padding:6px 2px;cursor:pointer}
 .clue b{margin-right:6px}
-.kbd{background:#d1d3d9;padding:6px 3px calc(env(safe-area-inset-bottom) + 8px)}
+.kbd{touch-action:manipulation;background:#d1d3d9;padding:6px 3px calc(env(safe-area-inset-bottom) + 8px)}
 .krow{display:flex;justify-content:center;gap:5px;margin:6px 0}
 .key{flex:0 0 calc((100% - 45px)/10);max-width:46px;height:44px;border:0;border-radius:6px;background:var(--key);box-shadow:0 1px 0 #898a8d;font-size:21px;display:flex;align-items:center;justify-content:center;padding:0}
 .key:active{background:#b6b9c1}

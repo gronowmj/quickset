@@ -37,7 +37,7 @@ const todayIso = () => params.get('today') && TEST ? params.get('today') : iso(n
 const nice = s => { const [y,m,d]=s.split('-').map(Number); const dt=new Date(y,m-1,d); return `${DAYS[dt.getDay()]} ${d} ${MONTHS[m-1]}`; };
 
 // ---- state ----
-let P, ans={}, cellsEl=[], grid=[], entryAt={}, S, sel={r:0,c:0,dir:'A'}, timerId=null, audio=null, muted=localStorage.getItem('qs-muted')==='1';
+let lastKeyAt=-1e9, P, ans={}, cellsEl=[], grid=[], entryAt={}, S, sel={r:0,c:0,dir:'A'}, timerId=null, audio=null, muted=localStorage.getItem('qs-muted')==='1';
 const key = () => 'qs-'+P.date;
 function save(){ localStorage.setItem(key(), JSON.stringify(S)); }
 
@@ -72,7 +72,7 @@ function setup(){
   for(let r=0;r<H;r++) for(let c=0;c<W;c++){
     const d=document.createElement('div'); d.className='cell'+(P.grid[r][c]==='#'?' blk':'');
     d.dataset.r=r; d.dataset.c=c;
-    if(P.grid[r][c]!=='#'){ if(nums[`${r},${c}`]) d.innerHTML=`<span class="n">${nums[`${r},${c}`]}</span>`; d.insertAdjacentHTML('beforeend','<span class="l"></span>'); d.addEventListener('click',()=>tapCell(r,c)); }
+    if(P.grid[r][c]!=='#'){ if(nums[`${r},${c}`]) d.innerHTML=`<span class="n">${nums[`${r},${c}`]}</span>`; d.insertAdjacentHTML('beforeend','<span class="l"></span>'); d.addEventListener('click',ev=>{ if(performance.now()-lastKeyAt<400) return; tapCell(r,c); }); }
     g.appendChild(d); cellsEl[`${r},${c}`]=d;
   }
   const first=P.entries.find(e=>e.dir==='A')||P.entries[0];
@@ -104,21 +104,22 @@ function nextUnfinished(){
   const L=ordered(); const i=L.indexOf(cur());
   for(let k=1;k<=L.length;k++){ const e=L[(i+k)%L.length]; if(e.cells.some(([r,c])=>!S.letters[`${r},${c}`])) return gotoEntry(e); }
 }
+// Selected word: strictly the current direction. Direction only changes by tapping a cell,
+// the clue bar, the clue arrows/Tab or arrow keys — never while typing.
+function curWord(){ return entryAt[`${sel.r},${sel.c},${sel.dir}`]; }
+function fixSel(){ if(!curWord()){ const o=sel.dir==='A'?'D':'A'; if(entryAt[`${sel.r},${sel.c},${o}`]) sel.dir=o; } }
 function type(ch){
   unlockAudio(); if(S.done) return;
-  const e=cur(); if(!e) return; const k=`${sel.r},${sel.c}`;
-  if(S.revealed[k]){ /* locked */ } else { S.letters[k]=ch; delete S.bad[k]; }
+  fixSel(); const e=curWord(); if(!e) return; const k=`${sel.r},${sel.c}`;
+  if(!S.revealed[k]){ S.letters[k]=ch; delete S.bad[k]; }
   const i=e.cells.findIndex(([r,c])=>r===sel.r&&c===sel.c);
-  // next empty cell in word after i
-  let nxt=null; for(let j=i+1;j<e.len;j++){ const [r,c]=e.cells[j]; if(!S.letters[`${r},${c}`]){ nxt=e.cells[j]; break; } }
-  if(!nxt) for(let j=0;j<i;j++){ const [r,c]=e.cells[j]; if(!S.letters[`${r},${c}`]){ nxt=e.cells[j]; break; } }
-  save();
-  if(nxt){ sel.r=nxt[0]; sel.c=nxt[1]; render(); }
-  else { render(); if(!checkDone()) nextUnfinished(); }
+  // overwrite style: always the next cell in this word; stay put on the last cell
+  if(i>=0 && i<e.len-1){ [sel.r,sel.c]=e.cells[i+1]; }
+  save(); render(); checkDone();
 }
 function del(){
-  if(S.done) return; const e=cur(); if(!e) return; const k=`${sel.r},${sel.c}`;
-  if(S.letters[k] && !S.revealed[k]){ delete S.letters[k]; delete S.bad[k]; }
+  if(S.done) return; fixSel(); const e=curWord(); if(!e) return; const k=`${sel.r},${sel.c}`;
+  if(S.letters[k]){ if(!S.revealed[k]){ delete S.letters[k]; delete S.bad[k]; } }
   else { const i=e.cells.findIndex(([r,c])=>r===sel.r&&c===sel.c); if(i>0){ [sel.r,sel.c]=e.cells[i-1]; const k2=`${sel.r},${sel.c}`; if(!S.revealed[k2]){ delete S.letters[k2]; delete S.bad[k2]; } } }
   save(); render();
 }
@@ -160,7 +161,7 @@ function hint(kind){
   else if(kind==='checkgrid'){ check(Object.keys(grid).filter(k=>k.includes(','))); S.hints++; }
   else if(kind==='grid'){ return ask('Reveal the whole grid? This ends the puzzle.',()=>{ Object.keys(grid).filter(k=>k.includes(',')).forEach(reveal); S.hints++; S.revealedAll=true; save(); render(); checkDone(); }); }
   save(); render();
-  if(kind==='letter'||kind==='word'){ if(!checkDone() && kind==='word') nextUnfinished(); }
+  if(kind==='letter'||kind==='word') checkDone();
 }
 
 // ---- timer ----
@@ -186,7 +187,9 @@ function buildKeyboard(){
     for(const ch of row){ const b=document.createElement('button'); b.className='key'; b.textContent=ch; b.dataset.k=ch; d.appendChild(b); }
     if(i===2){ const b=document.createElement('button'); b.className='key del'; b.dataset.k='DEL'; b.setAttribute('aria-label','Delete'); b.innerHTML='<svg viewBox="0 0 24 24" width="24" height="24"><path d="M9 5h11v14H9l-6-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9l5 6M17 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'; d.appendChild(b); }
     k.appendChild(d); });
-  k.addEventListener('pointerdown',ev=>{ const b=ev.target.closest('.key'); if(!b) return; ev.preventDefault(); b.dataset.k==='DEL'?del():type(b.dataset.k); });
+  k.addEventListener('pointerdown',ev=>{ const b=ev.target.closest('.key'); if(!b) return; ev.preventDefault(); lastKeyAt=performance.now(); b.dataset.k==='DEL'?del():type(b.dataset.k); });
+  // swallow touch/click follow-ups from key presses so nothing else reacts to them
+  ['touchend','click','mousedown'].forEach(t=>k.addEventListener(t,ev=>{ if(ev.target.closest('.key')){ ev.preventDefault(); ev.stopPropagation(); } },{passive:false}));
 }
 function open(id){ document.querySelectorAll('.sheet').forEach(s=>s.hidden=true); $(id).hidden=false; }
 function closeAll(){ document.querySelectorAll('.sheet').forEach(s=>s.hidden=true); }

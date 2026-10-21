@@ -155,8 +155,8 @@ function hint(kind){
   const reveal=k=>{ if(S.letters[k]!==grid[k]||!S.revealed[k]){ S.letters[k]=grid[k]; S.revealed[k]=1; delete S.bad[k]; } };
   const check=list=>{ let wrong=0; for(const k of list){ if(S.letters[k] && S.letters[k]!==grid[k]){ S.bad[k]=1; wrong++; } } toast(wrong?`${wrong} wrong letter${wrong>1?'s':''}`:'No mistakes so far'); };
   const ek=e.cells.map(([r,c])=>`${r},${c}`);
-  if(kind==='letter'){ reveal(`${sel.r},${sel.c}`); S.hints++; }
-  else if(kind==='word'){ ek.forEach(reveal); S.hints++; }
+  if(kind==='letter'){ reveal(`${sel.r},${sel.c}`); S.hints++; toast('Revealed one letter'); }
+  else if(kind==='word'){ ek.forEach(reveal); S.hints++; toast(`Revealed ${e.num} ${e.dir==='A'?'across':'down'} (${ek.length} letters)`); }
   else if(kind==='checkword'){ check(ek); S.hints++; }
   else if(kind==='checkgrid'){ check(Object.keys(grid).filter(k=>k.includes(','))); S.hints++; }
   else if(kind==='grid'){ return ask('Reveal the whole grid? This ends the puzzle.',()=>{ Object.keys(grid).filter(k=>k.includes(',')).forEach(reveal); S.hints++; S.revealedAll=true; save(); render(); checkDone(); }); }
@@ -191,8 +191,15 @@ function buildKeyboard(){
   // swallow touch/click follow-ups from key presses so nothing else reacts to them
   ['touchend','click','mousedown'].forEach(t=>k.addEventListener(t,ev=>{ if(ev.target.closest('.key')){ ev.preventDefault(); ev.stopPropagation(); } },{passive:false}));
 }
-function open(id){ document.querySelectorAll('.sheet').forEach(s=>s.hidden=true); $(id).hidden=false; }
-function closeAll(){ document.querySelectorAll('.sheet').forEach(s=>s.hidden=true); }
+// While a sheet is open the page underneath is locked, so iPhone Safari can't scroll it and
+// resize its toolbar mid-tap (that slid the bottom-anchored menu by about one row).
+function open(id){ document.querySelectorAll('.sheet').forEach(s=>s.hidden=true); $(id).hidden=false; document.documentElement.classList.add('sheet-open'); }
+function closeAll(){ document.querySelectorAll('.sheet').forEach(s=>s.hidden=true); document.documentElement.classList.remove('sheet-open'); }
+// A menu button only acts if the finger went down on that same button. If the menu moved
+// between touch-down and release, the release can land on the neighbouring row: aiming at
+// "Reveal word" then ran "Reveal letter". Keyboard activation (detail 0) is unaffected.
+let downBtn=null;
+const sameTap = (ev,b) => { const ok = !ev.detail || downBtn===b; downBtn=null; return ok; };
 let confirmFn=null;
 function ask(text,fn){ $('#confirmText').textContent=text; confirmFn=fn; open('#confirm'); }
 let toastT; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,1800); }
@@ -216,7 +223,9 @@ function bind(){
   $('#clueText').onclick=toggleDir;
   $('#hintBtn').onclick=()=>{ unlockAudio(); open('#hintMenu'); };
   $('#moreBtn').onclick=()=>{ unlockAudio(); open('#moreMenu'); };
-  document.querySelectorAll('[data-hint]').forEach(b=>b.onclick=()=>{ closeAll(); hint(b.dataset.hint); });
+  document.addEventListener('pointerdown',ev=>{ downBtn=ev.target.closest('.sheet button'); },true);
+  document.querySelectorAll('#hintMenu,#moreMenu').forEach(s=>s.addEventListener('touchmove',ev=>{ if(!ev.target.closest('.menu.list')) ev.preventDefault(); },{passive:false}));
+  document.querySelectorAll('[data-hint]').forEach(b=>b.onclick=ev=>{ if(!sameTap(ev,b)) return; closeAll(); hint(b.dataset.hint); });
   document.querySelectorAll('.sheet').forEach(s=>s.addEventListener('click',ev=>{ if(ev.target===s||ev.target.closest('.cancel')) closeAll(); }));
   $('#confirmOk').onclick=()=>{ closeAll(); const f=confirmFn; confirmFn=null; f&&f(); };
   $('#archiveBtn').onclick=showArchive;

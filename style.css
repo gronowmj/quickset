@@ -37,6 +37,8 @@ main{flex:1 0 auto;display:flex;align-items:center;justify-content:center;paddin
 .key.del{flex-basis:calc((100% - 45px)/10*1.4);max-width:64px;background:#adb1bb}
 .sheet{position:fixed;inset:0;background:rgba(20,10,40,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .sheet[hidden]{display:none}
+html.sheet-open,html.sheet-open body{overflow:hidden}
+.sheet{overscroll-behavior:contain}.menu.list{overscroll-behavior:contain}
 .menu{background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:8px 12px calc(env(safe-area-inset-bottom) + 14px)}
 .menu button{display:block;width:100%;text-align:left;padding:15px 12px;border:0;border-bottom:1px solid #eee;background:none;font-size:17px}
 .menu button.danger{color:var(--bad)}
